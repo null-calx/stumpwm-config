@@ -1,0 +1,64 @@
+#+TITLE: stumpwm configuration
+#+AUTHOR: calx
+
+(made :with lisp)
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (in-package :stumpwm-user)
+#+END_SRC
+
+* key setup
+
+** motion keys
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (set-prefix-key (kbd "s-t"))
+
+  (define-key *top-map* (kbd "s-j") "fnext")
+  (define-key *top-map* (kbd "s-k") "fprev")
+
+  (define-key *top-map* (kbd "s-n") "pull-hidden-next")
+  (define-key *top-map* (kbd "s-p") "pull-hidden-previous")
+#+END_SRC
+
+** program keys
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (define-key *top-map* (kbd "s-RET") "exec alacritty")
+
+  (define-key *top-map* (kbd "s-z") "exec emacsclient -c -a 'emacs'")
+  (define-key *top-map* (kbd "s-Z") "exec emacs")
+#+END_SRC
+
+* group setup
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (grename "home")
+#+END_SRC
+
+* mode-line setup
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (setf *mode-line-position* :bottom)
+
+  (mode-line)
+#+END_SRC
+
+* other setup
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (setf *mouse-focus-policy* :sloppy)
+
+  (setf *message-window-gravity* :center
+	*message-window-input-gravity* :center
+	*input-window-gravity* :center)
+#+END_SRC
+
+* spawn once
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (loop for cmd in (list "~/.fehbg"
+			 "xsetroot -cursor_name left_ptr"
+			 "picom")
+	do (run-shell-command cmd))
+#+END_SRC

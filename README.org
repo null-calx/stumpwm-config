@@ -1,0 +1,7 @@
+#+TITLE: stumpwm configuration
+#+AUTHOR: calx
+
+* quickstart
+
+open [[./stumpwm.org]] in emacs and tangle ~init.lisp~ by either by
+running ~org-babel-tangle~ or by pressing ~C-c C-v t~.
