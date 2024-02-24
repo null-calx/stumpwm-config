@@ -7,18 +7,36 @@
   (in-package :stumpwm-user)
 #+END_SRC
 
+* modules
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (load-module "battery-portable")
+  (load-module "cpu")
+  (load-module "mem")
+  (load-module "stumptray")
+#+END_SRC
+
 * key setup
 
-** motion keys
+** root map
 
 #+BEGIN_SRC common-lisp :tangle init.lisp
   (set-prefix-key (kbd "s-t"))
 
+  (define-key *root-map* (kbd "r") "restart-hard")
+#+END_SRC
+
+** motion keys
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
   (define-key *top-map* (kbd "s-j") "fnext")
   (define-key *top-map* (kbd "s-k") "fprev")
 
   (define-key *top-map* (kbd "s-n") "pull-hidden-next")
   (define-key *top-map* (kbd "s-p") "pull-hidden-previous")
+
+  (define-key *top-map* (kbd "s-]") "gnext")
+  (define-key *top-map* (kbd "s-[") "gprev")
 #+END_SRC
 
 ** program keys
@@ -30,6 +48,21 @@
   (define-key *top-map* (kbd "s-Z") "exec emacs")
 #+END_SRC
 
+** other keys
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (define-key *top-map* (kbd "s-d") "exec")
+  (define-key *top-map* (kbd "s-c") "exec rofi -show drun")
+
+  (define-key *top-map* (kbd "XF86AudioPlay") "exec playerctl play-pause")
+  (define-key *top-map* (kbd "XF86AudioPrev") "exec playerctl prev")
+  (define-key *top-map* (kbd "XF86AudioNext") "exec playerctl next")
+
+  (define-key *top-map* (kbd "SunPrint_Screen") "exec scrot -f ~/captures/%Y-%m-%d_%H:%M:%S.png")
+
+  (define-key *top-map* (kbd "s-g") "abort")
+#+END_SRC
+
 * group setup
 
 #+BEGIN_SRC common-lisp :tangle init.lisp
@@ -39,9 +72,30 @@
 * mode-line setup
 
 #+BEGIN_SRC common-lisp :tangle init.lisp
+  (setf *time-format-string* "%a %b %e %Y %k:%M:%S")
+  (setf *screen-mode-line-format*
+	(list "[%n]"
+	      "%v"
+	      "^>"
+	      " | %C"
+	      " | %M"
+	      " | %B"
+	      " | %d"
+	      " |  "))
+  (setf *mode-line-timeout* 1)
   (setf *mode-line-position* :bottom)
+  (setf *mode-line-background-color* "#000000")
+  (setf *mode-line-foreground-color* "#FFFFFF")
 
   (mode-line)
+#+END_SRC
+
+** stumptray setup
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (setf stumptray::*tray-viwin-background* *mode-line-background-color*)
+
+  (stumptray::stumptray)
 #+END_SRC
 
 * other setup
@@ -59,6 +113,8 @@
 #+BEGIN_SRC common-lisp :tangle init.lisp
   (loop for cmd in (list "~/.fehbg"
 			 "xsetroot -cursor_name left_ptr"
-			 "picom")
+			 "picom"
+			 "nm-applet"
+			 "dunst")
 	do (run-shell-command cmd))
 #+END_SRC
