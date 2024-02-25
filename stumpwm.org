@@ -61,8 +61,8 @@
   (define-key *top-map* (kbd "S-XF86MonBrightnessDown") "exec brightnessctl set -2%")
 
   ;; volume control
-  (define-key *top-map* (kbd "XF86AudioMute") "exec pactl set-sink-volume @DEFAULT_SINK@ toggle")
-  (define-key *top-map* (kbd "C-XF86AudioMute") "exec pactl set-sink-volume @DEFAULT_SINK@ yes")
+  (define-key *top-map* (kbd "XF86AudioMute") "exec pactl set-sink-mute @DEFAULT_SINK@ toggle")
+  (define-key *top-map* (kbd "C-XF86AudioMute") "exec pactl set-sink-mute @DEFAULT_SINK@ yes")
   (define-key *top-map* (kbd "XF86AudioRaiseVolume") "exec pactl set-sink-volume @DEFAULT_SINK@ +10%")
   (define-key *top-map* (kbd "XF86AudioLowerVolume") "exec pactl set-sink-volume @DEFAULT_SINK@ -10%")
   (define-key *top-map* (kbd "S-XF86AudioRaiseVolume") "exec pactl set-sink-volume @DEFAULT_SINK@ +2%")
