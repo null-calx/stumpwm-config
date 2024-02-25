@@ -54,11 +54,17 @@
   (define-key *top-map* (kbd "s-d") "exec")
   (define-key *top-map* (kbd "s-c") "exec rofi -show drun")
 
+  (define-key *top-map* (kbd "s-g") "abort")
+#+END_SRC
+
+** controller keys
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
   ;; brightness control
   (define-key *top-map* (kbd "XF86MonBrightnessUp") "exec brightnessctl set +10%")
-  (define-key *top-map* (kbd "XF86MonBrightnessDown") "exec brightnessctl set -10%")
+  (define-key *top-map* (kbd "XF86MonBrightnessDown") "exec brightnessctl set 10%-")
   (define-key *top-map* (kbd "S-XF86MonBrightnessUp") "exec brightnessctl set +2%")
-  (define-key *top-map* (kbd "S-XF86MonBrightnessDown") "exec brightnessctl set -2%")
+  (define-key *top-map* (kbd "S-XF86MonBrightnessDown") "exec brightnessctl set 2%-")
 
   ;; volume control
   (define-key *top-map* (kbd "XF86AudioMute") "exec pactl set-sink-mute @DEFAULT_SINK@ toggle")
@@ -77,8 +83,6 @@
   (define-key *top-map* (kbd "SunPrint_Screen") "exec scrot -f ~/captures/%Y-%m-%d_%H:%M:%S.png")
   (define-key *top-map* (kbd "C-SunPrint_Screen") "exec scrot -u -f ~/captures/\\$W.%Y-%m-%d_%H:%M:%S.png")
   (define-key *top-map* (kbd "M-SunPrint_Screen") "exec scrot -s -f ~/captures/%Y-%m-%d_%H:%M:%S.png")
-
-  (define-key *top-map* (kbd "s-g") "abort")
 #+END_SRC
 
 * group setup
