@@ -54,11 +54,29 @@
   (define-key *top-map* (kbd "s-d") "exec")
   (define-key *top-map* (kbd "s-c") "exec rofi -show drun")
 
+  ;; brightness control
+  (define-key *top-map* (kbd "XF86MonBrightnessUp") "exec brightnessctl set +10%")
+  (define-key *top-map* (kbd "XF86MonBrightnessDown") "exec brightnessctl set -10%")
+  (define-key *top-map* (kbd "S-XF86MonBrightnessUp") "exec brightnessctl set +2%")
+  (define-key *top-map* (kbd "S-XF86MonBrightnessDown") "exec brightnessctl set -2%")
+
+  ;; volume control
+  (define-key *top-map* (kbd "XF86AudioMute") "exec pactl set-sink-volume @DEFAULT_SINK@ toggle")
+  (define-key *top-map* (kbd "C-XF86AudioMute") "exec pactl set-sink-volume @DEFAULT_SINK@ yes")
+  (define-key *top-map* (kbd "XF86AudioRaiseVolume") "exec pactl set-sink-volume @DEFAULT_SINK@ +10%")
+  (define-key *top-map* (kbd "XF86AudioLowerVolume") "exec pactl set-sink-volume @DEFAULT_SINK@ -10%")
+  (define-key *top-map* (kbd "S-XF86AudioRaiseVolume") "exec pactl set-sink-volume @DEFAULT_SINK@ +2%")
+  (define-key *top-map* (kbd "S-XF86AudioLowerVolume") "exec pactl set-sink-volume @DEFAULT_SINK@ -2%")
+
+  ;; player control
   (define-key *top-map* (kbd "XF86AudioPlay") "exec playerctl play-pause")
   (define-key *top-map* (kbd "XF86AudioPrev") "exec playerctl prev")
   (define-key *top-map* (kbd "XF86AudioNext") "exec playerctl next")
 
+  ;; screenshot
   (define-key *top-map* (kbd "SunPrint_Screen") "exec scrot -f ~/captures/%Y-%m-%d_%H:%M:%S.png")
+  (define-key *top-map* (kbd "C-SunPrint_Screen") "exec scrot -u -f ~/captures/\\$W.%Y-%m-%d_%H:%M:%S.png")
+  (define-key *top-map* (kbd "M-SunPrint_Screen") "exec scrot -s -f ~/captures/%Y-%m-%d_%H:%M:%S.png")
 
   (define-key *top-map* (kbd "s-g") "abort")
 #+END_SRC
