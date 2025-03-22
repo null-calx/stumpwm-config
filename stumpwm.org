@@ -10,9 +10,9 @@
 * modules
 
 #+BEGIN_SRC common-lisp :tangle init.lisp
-  (load-module "battery-portable")
   (load-module "cpu")
   (load-module "mem")
+  (load-module "net")
   (load-module "stumptray")
 #+END_SRC
 
@@ -109,19 +109,29 @@
 #+BEGIN_SRC common-lisp :tangle init.lisp
   (setf *time-format-string* "%a %b %e %Y %k:%M:%S")
   (setf *screen-mode-line-format*
-	(list "[%n]"
-	      "%v"
-	      "^>"
-	      " | %C"
-	      " | %M"
-	      " | %B"
-	      " | %d"
-	      " |  "))
+  	(list "[%n]"
+  	      "%v"
+  	      "^>"
+  	      " | %C"
+  	      " | %M"
+  	      " | %l"
+  	      " | %d"
+  	      " | %T"))
   (setf *mode-line-timeout* 1)
   (setf *mode-line-position* :bottom)
   (setf *mode-line-background-color* "#000000")
   (setf *mode-line-foreground-color* "#FFFFFF")
+#+END_SRC
 
+** cpu setup
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (setf cpu::*cpu-modeline-fmt* "%c (%f)")
+#+END_SRC
+
+** start mode-line
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
   (mode-line)
 #+END_SRC
 
@@ -129,6 +139,7 @@
 
 #+BEGIN_SRC common-lisp :tangle init.lisp
   (setf stumptray::*tray-viwin-background* *mode-line-background-color*)
+  (setf stumptray::*tray-placeholder-pixels-per-space* 7)
 
   (stumptray::stumptray)
 #+END_SRC
@@ -147,9 +158,10 @@
 
 #+BEGIN_SRC common-lisp :tangle init.lisp
   (loop for cmd in (list "~/.fehbg"
-			 "xsetroot -cursor_name left_ptr"
-			 "picom"
-			 "nm-applet"
-			 "dunst")
-	do (run-shell-command cmd))
+  		       "setxkbmap -option ctrl:swapcaps"
+  		       "xsetroot -cursor_name left_ptr"
+  		       "picom"
+  		       "nm-applet"
+  		       "dunst")
+        do (run-shell-command cmd))
 #+END_SRC
