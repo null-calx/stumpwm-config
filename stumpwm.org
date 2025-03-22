@@ -85,6 +85,19 @@
   (define-key *top-map* (kbd "M-SunPrint_Screen") "exec scrot -s -f ~/captures/%Y-%m-%d_%H:%M:%S.png")
 #+END_SRC
 
+** system keys
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (defvar *system-map* (make-sparse-keymap))
+
+  (define-key *system-map* (kbd "s") "exec systemctl sleep")
+  (define-key *system-map* (kbd "S") "exec shutdown now")
+  (define-key *system-map* (kbd "x") "exec xsecurelock")
+
+  ;; (define-key *root-map* (kbd "x") '*system-map*)
+  (define-key *top-map* (kbd "s-x") '*system-map*)
+#+END_SRC
+
 * group setup
 
 #+BEGIN_SRC common-lisp :tangle init.lisp
