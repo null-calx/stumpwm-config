@@ -150,8 +150,8 @@
   (setf *mouse-focus-policy* :sloppy)
 
   (setf *message-window-gravity* :center
-	*message-window-input-gravity* :center
-	*input-window-gravity* :center)
+        ,*message-window-input-gravity* :center
+        ,*input-window-gravity* :center)
 #+END_SRC
 
 * spawn once
