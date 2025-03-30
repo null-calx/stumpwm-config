@@ -16,6 +16,31 @@
   (load-module "stumptray")
 #+END_SRC
 
+* commands
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (define-stumpwm-type :system-commands (input prompt)
+    (let ((cmds '(("sleep" :sleep)
+  		("lock" :lock)
+  		("reboot" :reboot)
+  		("power-off" :power-off)))
+  	(arg (argument-pop input)))
+      (if arg
+  	(second (assoc arg cmds :test #'string=))
+        (second (assoc (completing-read (current-screen) prompt (mapcar #'first cmds)
+  				      :require-match t)
+  		     cmds :test #'string=)))))
+
+  (defcommand system (cmd)
+      ((:system-commands "Pick a command: "))
+    (case cmd
+      (:lock	(run-shell-command "xsecurelock"))
+      (:power-off (run-shell-command "shutdown now" t))
+      (:reboot	(run-shell-command "reboot" t))
+      (:sleep	(run-shell-command "systemctl sleep" t))
+      (t (throw 'error "invalid system command"))))
+#+END_SRC
+
 * key setup
 
 ** root map
@@ -90,9 +115,10 @@
 #+BEGIN_SRC common-lisp :tangle init.lisp
   (defvar *system-map* (make-sparse-keymap))
 
-  (define-key *system-map* (kbd "s") "exec systemctl sleep")
-  (define-key *system-map* (kbd "S") "exec shutdown now")
-  (define-key *system-map* (kbd "x") "exec xsecurelock")
+  (define-key *system-map* (kbd "S") "system power-off")
+  (define-key *system-map* (kbd "r") "system reboot")
+  (define-key *system-map* (kbd "s") "system sleep")
+  (define-key *system-map* (kbd "x") "system lock")
 
   ;; (define-key *root-map* (kbd "x") '*system-map*)
   (define-key *top-map* (kbd "s-x") '*system-map*)
