@@ -20,6 +20,8 @@
 
 ** system commands
 
+- DEPENDENCY: ~systemd~, ~xsecurelock~
+
 #+BEGIN_SRC common-lisp :tangle init.lisp
   (define-stumpwm-type :system-commands (input prompt)
     (let ((cmds '(("sleep"	:sleep)
@@ -42,6 +44,9 @@
 #+END_SRC
 
 ** volume commands
+
+- TODO: load ~yason~ "the correct way"
+- DEPENDENCY: ~pactl~
 
 #+BEGIN_SRC common-lisp :tangle init.lisp
   (ql:quickload :yason)
@@ -79,7 +84,7 @@
   	(list (second choice)
   	      (parse-integer (argument-pop-or-read input "Enter delta: ")
   			     :junk-allowed nil))
-        (list (second choice) nil))))
+  	(list (second choice) nil))))
 
   (defcommand volume (cmd)
       ((:volume-commands "Pick a volume command: "))
@@ -107,7 +112,9 @@
       (t (throw 'error "invalid volume command"))))
 #+END_SRC
 
-** player controls
+** player commands
+
+- DEPENDENCY: ~playerctl~
 
 #+BEGIN_SRC common-lisp :tangle init.lisp
   (defun player-show ()
@@ -228,14 +235,14 @@
 #+BEGIN_SRC common-lisp :tangle init.lisp
   (setf *time-format-string* "%a %b %e %Y %k:%M:%S")
   (setf *screen-mode-line-format*
-  	(list "[%n]"
-  	      "%v"
+  	(list "[%n]"    ; current group name
+  	      "%v"      ; open windows
   	      "^>"
-  	      " | %C"
-  	      " | %M"
-  	      " | %l"
-  	      " | %d"
-  	      " | %T"))
+  	      " | %C"   ; cpu monitor
+  	      " | %M"   ; memory monitor
+  	      " | %l"   ; network monitor
+  	      " | %d"   ; date
+  	      " | %T")) ; sets space for tray icons
   (setf *mode-line-timeout* 1)
   (setf *mode-line-position* :bottom)
   (setf *mode-line-background-color* "#000000")
@@ -243,6 +250,9 @@
 #+END_SRC
 
 ** cpu setup
+
+- TODO: facing issues with the complete fmt
+- TODO: add temperature support
 
 #+BEGIN_SRC common-lisp :tangle init.lisp
   (setf cpu::*cpu-modeline-fmt* "%c (%f)")
@@ -265,6 +275,8 @@
 
 * other setup
 
+- TODO: use better font
+
 #+BEGIN_SRC common-lisp :tangle init.lisp
   (setf *mouse-focus-policy* :sloppy)
 
@@ -274,6 +286,9 @@
 #+END_SRC
 
 * spawn once
+
+- TODO: don't respawn on restart
+- MAYBE: start emacs server
 
 #+BEGIN_SRC common-lisp :tangle init.lisp
   (loop for cmd in (list "~/.fehbg"
