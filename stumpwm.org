@@ -84,6 +84,14 @@
   (defcommand volume (cmd)
       ((:volume-commands "Pick a volume command: "))
     (case (first cmd)
+      (:show
+       (volume-show))
+      (:toggle-mute
+       (run-shell-command "pactl set-sink-mute @DEFAULT_SINK@ toggle" t)
+       (volume-show))
+      (:force-mute
+       (run-shell-command "pactl set-sink-mute @DEFAULT_SINK@ yes" t)
+       (volume-show))
       (:increase
        (check-type (second cmd) integer)
        (run-shell-command
@@ -96,15 +104,40 @@
         (format nil "pactl set-sink-volume @DEFAULT_SINK@ -~D%" (second cmd))
         t)
        (volume-show))
-      (:show
-       (volume-show))
-      (:toggle-mute
-       (run-shell-command "pactl set-sink-mute @DEFAULT_SINK@ toggle" t)
-       (volume-show))
-      (:force-mute
-       (run-shell-command "pactl set-sink-mute @DEFAULT_SINK@ yes" t)
-       (volume-show))
       (t (throw 'error "invalid volume command"))))
+#+END_SRC
+
+** player controls
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (defun player-show ()
+    (message (run-shell-command "playerctl metadata --format '{{title}}
+  {{default(artist, \"<unknown-artist>\")}} -- {{default(album, \"<unknown-album>\")}}
+  {{lc(status)}} on {{playerName}} ({{duration(position)}} of {{duration(mpris:length)}})'" t)))
+
+  (define-stumpwm-type :player-commands (input prompt)
+    (let ((cmds '(("show" :show)
+  		("play" :play)
+  		("pause" :pause)
+  		("play-pause" :play-pause)
+  		("toggle-play" :play-pause)
+  		("previous" :previous)
+  		("prev" :previous)
+  		("next" :next)
+  		("stop" :stop))))
+      (or (second (assoc (argument-pop-or-read input prompt (mapcar #'first cmds))
+  		       cmds :test #'string=))
+  	(throw 'error :abort))))
+
+  (defcommand player (cmd)
+      ((:player-commands "Pick a player command: "))
+    (case cmd
+      (:show
+       (player-show))
+      ((:play :pause :play-pause :previous :next :stop)
+       (run-shell-command (format nil "playerctl ~(~A~)" cmd) t)
+       (player-show))
+      (t (throw 'error "invalid player command"))))
 #+END_SRC
 
 * key setup
@@ -160,9 +193,9 @@
   (define-key *top-map* (kbd "S-XF86AudioLowerVolume") "volume dec 2")
 
   ;; player control
-  (define-key *top-map* (kbd "XF86AudioPlay") "exec playerctl play-pause")
-  (define-key *top-map* (kbd "XF86AudioPrev") "exec playerctl prev")
-  (define-key *top-map* (kbd "XF86AudioNext") "exec playerctl next")
+  (define-key *top-map* (kbd "XF86AudioPlay") "player toggle-play")
+  (define-key *top-map* (kbd "XF86AudioPrev") "player prev")
+  (define-key *top-map* (kbd "XF86AudioNext") "player next")
 
   ;; screenshot
   (define-key *top-map* (kbd "SunPrint_Screen") "exec scrot -f ~/captures/%Y-%m-%d_%H:%M:%S.png")
