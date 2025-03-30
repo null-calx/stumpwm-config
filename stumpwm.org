@@ -18,27 +18,93 @@
 
 * commands
 
+** system commands
+
 #+BEGIN_SRC common-lisp :tangle init.lisp
   (define-stumpwm-type :system-commands (input prompt)
-    (let ((cmds '(("sleep" :sleep)
-  		("lock" :lock)
-  		("reboot" :reboot)
-  		("power-off" :power-off)))
-  	(arg (argument-pop input)))
-      (if arg
-  	(second (assoc arg cmds :test #'string=))
-        (second (assoc (completing-read (current-screen) prompt (mapcar #'first cmds)
-  				      :require-match t)
-  		     cmds :test #'string=)))))
+    (let ((cmds '(("sleep"	:sleep)
+  		("lock"		:lock)
+  		("reboot"	:reboot)
+  		("power-off"	:power-off)
+  		("shutdown"	:power-off))))
+      (or (second (assoc (argument-pop-or-read input prompt (mapcar #'first cmds))
+  		       cmds :test #'string=))
+  	(throw 'error :abort))))
 
   (defcommand system (cmd)
-      ((:system-commands "Pick a command: "))
+      ((:system-commands "Pick a system command: "))
     (case cmd
       (:lock	(run-shell-command "xsecurelock"))
       (:power-off (run-shell-command "shutdown now" t))
       (:reboot	(run-shell-command "reboot" t))
       (:sleep	(run-shell-command "systemctl sleep" t))
       (t (throw 'error "invalid system command"))))
+#+END_SRC
+
+** volume commands
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (ql:quickload :yason)
+
+  (defun volume--default-sink-name ()
+    (gethash "default_sink_name" (yason:parse (run-shell-command "pactl -f json info" t))))
+
+  (defun volume--get-sink (&optional (sink-name (volume--default-sink-name)))
+    (find sink-name (gethash "sinks" (yason:parse (run-shell-command "pactl -f json list" t)))
+  	:test #'string=
+  	:key #'(lambda (sink) (gethash "name" sink))))
+
+  (defun volume--get-sink-volume (&optional (sink (volume--get-sink)))
+    (list
+     (gethash "value_percent" (gethash "front-left" (gethash "volume" sink)))
+     (gethash "value_percent" (gethash "front-right" (gethash "volume" sink)))
+     (gethash "mute" sink)))
+
+  (defun volume-show ()
+    (message "~{VOLUME: ~A // ~A~%MUTED:  ~:[no~;yes~]~}" (volume--get-sink-volume)))
+
+  (define-stumpwm-type :volume-commands (input prompt)
+    (let* ((cmds '(("increase"	:increase t)
+  		 ("inc"		:increase t)
+  		 ("decrease"	:decrease t)
+  		 ("dec"		:decrease t)
+
+  		 ("show"        :show nil)
+  		 ("toggle-mute" :toggle-mute nil)
+  		 ("force-mute"	:force-mute  nil)))
+  	 (choice (or (assoc (argument-pop-or-read input prompt (mapcar #'first cmds))
+  			    cmds :test #'string=)
+  		     (throw 'error "invalid volume command"))))
+      (if (third choice)
+  	(list (second choice)
+  	      (parse-integer (argument-pop-or-read input "Enter delta: ")
+  			     :junk-allowed nil))
+        (list (second choice) nil))))
+
+  (defcommand volume (cmd)
+      ((:volume-commands "Pick a volume command: "))
+    (case (first cmd)
+      (:increase
+       (check-type (second cmd) integer)
+       (run-shell-command
+        (format nil "pactl set-sink-volume @DEFAULT_SINK@ +~D%" (second cmd))
+        t)
+       (volume-show))
+      (:decrease
+       (check-type (second cmd) integer)
+       (run-shell-command
+        (format nil "pactl set-sink-volume @DEFAULT_SINK@ -~D%" (second cmd))
+        t)
+       (volume-show))
+      (:show
+       (volume-show))
+      (:toggle-mute
+       (run-shell-command "pactl set-sink-mute @DEFAULT_SINK@ toggle" t)
+       (volume-show))
+      (:force-mute
+       (run-shell-command "pactl set-sink-mute @DEFAULT_SINK@ yes" t)
+       (volume-show))
+      (t (throw 'error "invalid volume command"))))
 #+END_SRC
 
 * key setup
@@ -86,12 +152,12 @@
 
 #+BEGIN_SRC common-lisp :tangle init.lisp
   ;; volume control
-  (define-key *top-map* (kbd "XF86AudioMute") "exec pactl set-sink-mute @DEFAULT_SINK@ toggle")
-  (define-key *top-map* (kbd "C-XF86AudioMute") "exec pactl set-sink-mute @DEFAULT_SINK@ yes")
-  (define-key *top-map* (kbd "XF86AudioRaiseVolume") "exec pactl set-sink-volume @DEFAULT_SINK@ +10%")
-  (define-key *top-map* (kbd "XF86AudioLowerVolume") "exec pactl set-sink-volume @DEFAULT_SINK@ -10%")
-  (define-key *top-map* (kbd "S-XF86AudioRaiseVolume") "exec pactl set-sink-volume @DEFAULT_SINK@ +2%")
-  (define-key *top-map* (kbd "S-XF86AudioLowerVolume") "exec pactl set-sink-volume @DEFAULT_SINK@ -2%")
+  (define-key *top-map* (kbd "XF86AudioMute") "volume toggle-mute")
+  (define-key *top-map* (kbd "C-XF86AudioMute") "volume force-mute")
+  (define-key *top-map* (kbd "XF86AudioRaiseVolume") "volume inc 10")
+  (define-key *top-map* (kbd "XF86AudioLowerVolume") "volume dec 10")
+  (define-key *top-map* (kbd "S-XF86AudioRaiseVolume") "volume inc 2")
+  (define-key *top-map* (kbd "S-XF86AudioLowerVolume") "volume dec 2")
 
   ;; player control
   (define-key *top-map* (kbd "XF86AudioPlay") "exec playerctl play-pause")
@@ -178,7 +244,6 @@
 
 #+BEGIN_SRC common-lisp :tangle init.lisp
   (loop for cmd in (list "~/.fehbg"
-  		       "setxkbmap -option ctrl:swapcaps"
   		       "xsetroot -cursor_name left_ptr"
   		       "picom"
   		       "nm-applet"
