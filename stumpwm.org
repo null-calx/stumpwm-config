@@ -85,12 +85,6 @@
 ** controller keys
 
 #+BEGIN_SRC common-lisp :tangle init.lisp
-  ;; brightness control
-  (define-key *top-map* (kbd "XF86MonBrightnessUp") "exec brightnessctl set +10%")
-  (define-key *top-map* (kbd "XF86MonBrightnessDown") "exec brightnessctl set 10%-")
-  (define-key *top-map* (kbd "S-XF86MonBrightnessUp") "exec brightnessctl set +2%")
-  (define-key *top-map* (kbd "S-XF86MonBrightnessDown") "exec brightnessctl set 2%-")
-
   ;; volume control
   (define-key *top-map* (kbd "XF86AudioMute") "exec pactl set-sink-mute @DEFAULT_SINK@ toggle")
   (define-key *top-map* (kbd "C-XF86AudioMute") "exec pactl set-sink-mute @DEFAULT_SINK@ yes")
