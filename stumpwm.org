@@ -147,6 +147,65 @@
       (t (throw 'error "invalid player command"))))
 #+END_SRC
 
+** screenshot commands
+
+- DEPENDENCY: ~scrot~, ~xclip~
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (defun screenshot--list-screenshots ()
+    (directory (make-pathname :directory '(:absolute :home "captures") :name :wild :type :wild)))
+
+  (defun screenshot--find-latest (&optional (file-list (screenshot--list-screenshots)))
+    (loop with latest-file = (first file-list)
+  	with latest-ctime = (sb-posix:stat-ctime (sb-posix:stat latest-file))
+  	for file in (rest file-list)
+  	for ctime = (sb-posix:stat-ctime (sb-posix:stat file))
+  	when (> ctime latest-ctime)
+  	  do (setf latest-file file
+  		   latest-ctime ctime)
+  	finally (return latest-file)))
+
+  (defun screenshot--copy-to-clipboard (&optional
+  					(filename (screenshot--find-latest))
+  					(filetype "image/png"))
+    (run-shell-command (format nil "xclip -selection clipboard -t ~A -i ~A"
+  			     filetype filename)
+  		     t))
+
+  (define-stumpwm-type :screenshot-commands (input prompt)
+    (let* ((cmds '(("delayed"		:delayed "Enter time (in sec): ")
+
+  		 ("full-screen"		:capture nil)
+  		 ("current-window"	:capture-window nil)
+  		 ("interactive"		:capture-interactive nil)
+  		 ("copy-to-clipboard"	:copy-to-clipboard nil)))
+  	 (choice (or (assoc (argument-pop-or-read input prompt (mapcar #'first cmds))
+  			    cmds :test #'string=)
+  		     (throw 'error "invalid screenshot command"))))
+      (if (third choice)
+  	(list (second choice)
+  	      (parse-integer (argument-pop-or-read input (third choice))
+  			     :junk-allowed nil))
+  	(list (second choice) nil))))
+
+  (defcommand screenshot (cmd)
+      ((:screenshot-commands "Pick a screenshot command: "))
+    (case (first cmd)
+      (:capture
+       (run-shell-command "scrot ~/captures/%Y-%m-%d_%H:%M:%S.png" t))
+      (:delayed
+       (check-type (second cmd) integer)
+       (run-shell-command
+        (format nil "scrot -d ~D ~~/captures/%Y-%m-%d_%H:%M:%S.png" (second cmd))))
+      (:capture-window
+       (run-shell-command "scrot -u ~/captures/\\$W.%Y-%m-%d_%H:%M:%S.png" t))
+      (:capture-interactive
+       (run-shell-command "scrot -s -f ~/captures/%Y-%m-%d_%H:%M:%S.png" t))
+      (:copy-to-clipboard
+       (screenshot--copy-to-clipboard))
+      (t (throw 'error "invalid player command"))))
+#+END_SRC
+
 * key setup
 
 ** root map
@@ -205,9 +264,30 @@
   (define-key *top-map* (kbd "XF86AudioNext") "player next")
 
   ;; screenshot
-  (define-key *top-map* (kbd "SunPrint_Screen") "exec scrot -f ~/captures/%Y-%m-%d_%H:%M:%S.png")
-  (define-key *top-map* (kbd "C-SunPrint_Screen") "exec scrot -u -f ~/captures/\\$W.%Y-%m-%d_%H:%M:%S.png")
-  (define-key *top-map* (kbd "M-SunPrint_Screen") "exec scrot -s -f ~/captures/%Y-%m-%d_%H:%M:%S.png")
+  (define-key *top-map* (kbd "SunPrint_Screen") "screenshot full-screen")
+  (define-key *top-map* (kbd "C-SunPrint_Screen") "screenshot current-window")
+  (define-key *top-map* (kbd "M-SunPrint_Screen") "screenshot interactive")
+#+END_SRC
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (defvar *controller-map* (make-sparse-keymap))
+
+  (define-key *controller-map* (kbd "i") "volume inc 10")
+  (define-key *controller-map* (kbd "I") "volume inc 2")
+  (define-key *controller-map* (kbd "d") "volume dec 10")
+  (define-key *controller-map* (kbd "D") "volume dec 2")
+  (define-key *controller-map* (kbd "m") "volume toggle-mute")
+  (define-key *controller-map* (kbd "M") "volume force-mute")
+
+  (define-key *controller-map* (kbd "p") "player play-pause")
+  (define-key *controller-map* (kbd "P") "player pause")
+
+  (define-key *controller-map* (kbd "s") "screenshot full-screen")
+  (define-key *controller-map* (kbd "S") "screenshot interactive")
+  (define-key *controller-map* (kbd "c") "screenshot copy-to-clipboard")
+  (define-key *controller-map* (kbd "C") "screenshot current-window")
+
+  (define-key *top-map* (kbd "s-a") *controller-map*)
 #+END_SRC
 
 ** system keys
