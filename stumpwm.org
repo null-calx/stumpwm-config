@@ -16,6 +16,18 @@
   (load-module "stumptray")
 #+END_SRC
 
+* utils
+
+#+BEGIN_SRC common-lisp :tangle init.lisp
+  (defun notifier (summary &key body icon replace-id expire-time app-name category)
+    (check-type replace-id (or integer null))
+    (let ((cmd ))
+      (run-shell-command (format nil "notify-send~@[ -i ~S~]~@[ -r ~A~]~@[ -t ~D~]~@[ -a ~S~]~@[ -c ~S~] ~S~@[ ~S~]"
+  			       (when icon (uiop:native-namestring icon))
+  			       replace-id expire-time app-name category summary body)
+       t)))
+#+END_SRC
+
 * commands
 
 ** system commands
@@ -51,6 +63,8 @@
 #+BEGIN_SRC common-lisp :tangle init.lisp
   (ql:quickload :yason)
 
+  (defparameter +volume-notification-replace-id+ (random (expt 2 16)))
+
   (defun volume--default-sink-name ()
     (gethash "default_sink_name" (yason:parse (run-shell-command "pactl -f json info" t))))
 
@@ -66,7 +80,11 @@
      (gethash "mute" sink)))
 
   (defun volume-show ()
-    (message "~{VOLUME: ~A // ~A~%MUTED:  ~:[no~;yes~]~}" (volume--get-sink-volume)))
+    (notifier "Volume"
+  	    :body (format nil "~{Volume: ~A // ~A~%Muted:  ~:[no~;yes~]~}"
+  			  (volume--get-sink-volume))
+  	    :replace-id +volume-notification-replace-id+
+  	    :expire-time 800))
 
   (define-stumpwm-type :volume-commands (input prompt)
     (let* ((cmds '(("increase"	:increase t)
@@ -117,21 +135,48 @@
 - DEPENDENCY: ~playerctl~
 
 #+BEGIN_SRC common-lisp :tangle init.lisp
+  (defparameter +player-notification-replace-id+ (random (expt 2 16)))
+
+  (defun player--remove-file-protocol (filename &optional (prefix "file://"))
+    (if (and (> (length filename) (length prefix))
+  	   (string= (subseq filename 0 (length prefix)) prefix))
+        (subseq filename (length prefix))
+        filename))
+
+  (defun player--load-metadata ()
+    (cl-ppcre:split "
+  " (run-shell-command "playerctl metadata --format '{{title}}
+  {{artist}}
+  {{album}}
+  {{status}}
+  {{playerName}}
+  {{duration(position)}}
+  {{duration(mpris:length)}}
+  {{mpris:artUrl}}'" t)))
+
   (defun player-show ()
-    (message (run-shell-command "playerctl metadata --format '{{title}}
-  {{default(artist, \"<unknown-artist>\")}} -- {{default(album, \"<unknown-album>\")}}
-  {{lc(status)}} on {{playerName}} ({{duration(position)}} of {{duration(mpris:length)}})'" t)))
+    (let ((metadata (player--load-metadata)))
+      (when metadata
+        (destructuring-bind (title artist album status player-name position length &optional icon)
+  	  metadata
+  	(notifier title
+  		  :body (format nil "~:[Album: ~A~%~;~*~]~:[By: ~A~%~;~*~]~A on ~A for ~A of ~A"
+  			        (zerop (length album)) album
+  				(zerop (length artist)) artist
+  				status player-name position length)
+  		  :replace-id +player-notification-replace-id+
+  		  :icon (when icon (probe-file (player--remove-file-protocol icon))))))))
 
   (define-stumpwm-type :player-commands (input prompt)
-    (let ((cmds '(("show" :show)
-  		("play" :play)
-  		("pause" :pause)
-  		("play-pause" :play-pause)
-  		("toggle-play" :play-pause)
-  		("previous" :previous)
-  		("prev" :previous)
-  		("next" :next)
-  		("stop" :stop))))
+    (let ((cmds '(("show"		:show)
+  		("play"		:play)
+  		("pause"	:pause)
+  		("play-pause"	:play-pause)
+  		("toggle-play"	:play-pause)
+  		("previous"	:previous)
+  		("prev"		:previous)
+  		("next"		:next)
+  		("stop"		:stop))))
       (or (second (assoc (argument-pop-or-read input prompt (mapcar #'first cmds))
   		       cmds :test #'string=))
   	(throw 'error :abort))))
@@ -156,21 +201,23 @@
     (directory (make-pathname :directory '(:absolute :home "captures") :name :wild :type :wild)))
 
   (defun screenshot--find-latest (&optional (file-list (screenshot--list-screenshots)))
-    (loop with latest-file = (first file-list)
-  	with latest-ctime = (sb-posix:stat-ctime (sb-posix:stat latest-file))
-  	for file in (rest file-list)
-  	for ctime = (sb-posix:stat-ctime (sb-posix:stat file))
-  	when (> ctime latest-ctime)
-  	  do (setf latest-file file
-  		   latest-ctime ctime)
-  	finally (return latest-file)))
+    (when file-list
+      (loop with latest-file = (first file-list)
+  	  with latest-ctime = (sb-posix:stat-ctime (sb-posix:stat latest-file))
+  	  for file in (rest file-list)
+  	  for ctime = (sb-posix:stat-ctime (sb-posix:stat file))
+  	  when (> ctime latest-ctime)
+  	    do (setf latest-file file
+  		     latest-ctime ctime)
+  	  finally (return latest-file))))
 
   (defun screenshot--copy-to-clipboard (&optional
   					(filename (screenshot--find-latest))
   					(filetype "image/png"))
-    (run-shell-command (format nil "xclip -selection clipboard -t ~A -i ~A"
-  			     filetype filename)
-  		     t))
+    (when filename
+      (run-shell-command (format nil "xclip -selection clipboard -t ~A -i ~A"
+  			       filetype filename)
+  		       t)))
 
   (define-stumpwm-type :screenshot-commands (input prompt)
     (let* ((cmds '(("delayed"		:delayed "Enter time (in sec): ")
