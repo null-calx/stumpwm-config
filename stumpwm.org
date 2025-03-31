@@ -107,27 +107,23 @@
   (defcommand volume (cmd)
       ((:volume-commands "Pick a volume command: "))
     (case (first cmd)
-      (:show
-       (volume-show))
+      (:show)
       (:toggle-mute
-       (run-shell-command "pactl set-sink-mute @DEFAULT_SINK@ toggle" t)
-       (volume-show))
+       (run-shell-command "pactl set-sink-mute @DEFAULT_SINK@ toggle" t))
       (:force-mute
-       (run-shell-command "pactl set-sink-mute @DEFAULT_SINK@ yes" t)
-       (volume-show))
+       (run-shell-command "pactl set-sink-mute @DEFAULT_SINK@ yes" t))
       (:increase
        (check-type (second cmd) integer)
        (run-shell-command
         (format nil "pactl set-sink-volume @DEFAULT_SINK@ +~D%" (second cmd))
-        t)
-       (volume-show))
+        t))
       (:decrease
        (check-type (second cmd) integer)
        (run-shell-command
         (format nil "pactl set-sink-volume @DEFAULT_SINK@ -~D%" (second cmd))
-        t)
-       (volume-show))
-      (t (throw 'error "invalid volume command"))))
+        t))
+      (t (throw 'error "invalid volume command")))
+    (volume-show))
 #+END_SRC
 
 ** player commands
@@ -184,12 +180,11 @@
   (defcommand player (cmd)
       ((:player-commands "Pick a player command: "))
     (case cmd
-      (:show
-       (player-show))
+      (:show)
       ((:play :pause :play-pause :previous :next :stop)
-       (run-shell-command (format nil "playerctl ~(~A~)" cmd) t)
-       (player-show))
-      (t (throw 'error "invalid player command"))))
+       (run-shell-command (format nil "playerctl ~(~A~)" cmd) t))
+      (t (throw 'error "invalid player command")))
+    (player-show))
 #+END_SRC
 
 ** screenshot commands
