@@ -161,6 +161,7 @@
   				(zerop (length artist)) artist
   				status player-name position length)
   		  :replace-id +player-notification-replace-id+
+  		  :expire-time 1600
   		  :icon (when icon (probe-file (player--remove-file-protocol icon))))))))
 
   (define-stumpwm-type :player-commands (input prompt)
@@ -304,6 +305,7 @@
   (define-key *top-map* (kbd "XF86AudioPlay") "player toggle-play")
   (define-key *top-map* (kbd "XF86AudioPrev") "player prev")
   (define-key *top-map* (kbd "XF86AudioNext") "player next")
+  (define-key *top-map* (kbd "XF86AudioStop") "player stop")
 
   ;; screenshot
   (define-key *top-map* (kbd "SunPrint_Screen") "screenshot full-screen")
@@ -320,9 +322,12 @@
   (define-key *controller-map* (kbd "D") "volume dec 2")
   (define-key *controller-map* (kbd "m") "volume toggle-mute")
   (define-key *controller-map* (kbd "M") "volume force-mute")
+  (define-key *controller-map* (kbd "C-v") "volume show")
+
 
   (define-key *controller-map* (kbd "p") "player play-pause")
   (define-key *controller-map* (kbd "P") "player pause")
+  (define-key *controller-map* (kbd "C-p") "player show")
 
   (define-key *controller-map* (kbd "s") "screenshot full-screen")
   (define-key *controller-map* (kbd "S") "screenshot interactive")
