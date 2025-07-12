@@ -52,7 +52,8 @@
       (:power-off (run-shell-command "shutdown now" t))
       (:reboot	(run-shell-command "reboot" t))
       (:sleep	(run-shell-command "systemctl sleep" t))
-      (t (throw 'error "invalid system command"))))
+      (t (throw 'error "invalid system command")))
+    nil)
 #+END_SRC
 
 ** volume commands
@@ -123,7 +124,8 @@
         (format nil "pactl set-sink-volume @DEFAULT_SINK@ -~D%" (second cmd))
         t))
       (t (throw 'error "invalid volume command")))
-    (volume-show))
+    (volume-show)
+    nil)
 #+END_SRC
 
 ** player commands
@@ -161,7 +163,7 @@
   				(zerop (length artist)) artist
   				status player-name position length)
   		  :replace-id +player-notification-replace-id+
-  		  :expire-time 1600
+  		  :expire-time 8000
   		  :icon (when icon (probe-file (player--remove-file-protocol icon))))))))
 
   (define-stumpwm-type :player-commands (input prompt)
@@ -185,7 +187,8 @@
       ((:play :pause :play-pause :previous :next :stop)
        (run-shell-command (format nil "playerctl ~(~A~)" cmd) t))
       (t (throw 'error "invalid player command")))
-    (player-show))
+    (player-show)
+    nil)
 #+END_SRC
 
 ** screenshot commands
@@ -212,8 +215,7 @@
   					(filetype "image/png"))
     (when filename
       (run-shell-command (format nil "xclip -selection clipboard -t ~A -i ~A"
-  			       filetype filename)
-  		       t)))
+  			       filetype filename))))
 
   (define-stumpwm-type :screenshot-commands (input prompt)
     (let* ((cmds '(("delayed"		:delayed "Enter time (in sec): ")
@@ -246,7 +248,8 @@
        (run-shell-command "scrot -s -f ~/captures/%Y-%m-%d_%H:%M:%S.png" t))
       (:copy-to-clipboard
        (screenshot--copy-to-clipboard))
-      (t (throw 'error "invalid player command"))))
+      (t (throw 'error "invalid player command")))
+    nil)
 #+END_SRC
 
 * key setup
